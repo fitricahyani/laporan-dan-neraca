@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Rekapitulasi Neraca Air</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f0f2f5; }
+        .admin-container { max-width: 1200px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3498db; padding-bottom: 15px; margin-bottom: 20px; }
+        h1 { color: #2c3e50; margin: 0; font-size: 20px; }
+        
+        .btn-group { display: flex; gap: 10px; }
+        .btn-refresh { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-refresh:hover { background: #2980b9; }
+        .btn-input { background: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 13px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        th { background-color: #2c3e50; color: white; padding: 12px; text-align: center; }
+        td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:hover { background-color: #f1f1f1; }
+        
+        .loading { text-align: center; padding: 40px; font-style: italic; color: #7f8c8d; font-size: 16px; }
+        .btn-action-view { background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .btn-action-delete { background: none; color: #e74c3c; border: none; cursor: pointer; font-weight: bold; margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    <div class="header">
+        <h1>📊 Rekapitulasi Data Blangko 10-O (Database: db_irigasi)</h1>
+        <div class="btn-group">
+            <button class="btn-refresh" onclick="muatData()">🔄 Refresh Data</button>
+            <a href="index.html" class="btn-input">➕ Input Baru</a>
+        </div>
+    </div>
+
+    <div id="loadingStatus" class="loading">Menghubungkan ke Supabase...</div>
+
+    <table id="tabelRekap" style="display:none;">
+        <thead>
+            <tr>
+                <th width="20%">Waktu Simpan</th>
+                <th width="25%">Petugas / Nama DI</th>
+                <th width="35%">Ringkasan Konten</th>
+                <th width="20%">Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="isiTabel">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    // --- 1. KONFIGURASI SUPABASE ---
+    const SUPABASE_URL = 'https://wcypnoofitfvqoexjhkg.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjeXBub29maXRmdnFvZXhqaGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTQ1ODEsImV4cCI6MjA5MTAzMDU4MX0.PC1mMJM39ECO9gstUB5R0UsHOZuZzeea4TvbDLg2lBU';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // --- 2. FUNGSI AMBIL DATA ---
+    async function muatData() {
+        const loading = document.getElementById('loadingStatus');
+        const tabel = document.getElementById('tabelRekap');
+        const tbody = document.getElementById('isiTabel');
+
+        loading.style.display = 'block';
+        loading.innerText = "⏳ Sedang mengambil data...";
+        tabel.style.display = 'none';
+        tbody.innerHTML = '';
+
+        try {
+            const { data, error } = await _supabase
+                .from('db_irigasi') 
+                .select('*')
+                .order('tgl_update', { ascending: false });
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${new Date(row.tgl_update).toLocaleString('id-ID')}</td>
+                        <td><strong>${row.nama_di || 'TIDAK ADA NAMA'}</strong></td>
+                        <td style="color: #95a5a6; font-size: 11px;">Data tabel HTML berhasil tersimpan</td>
+                        <td>
+                            <button class="btn-action-view" onclick="lihatDetail('${row.id}')">👁️ Lihat Laporan</button>
+                            <button class="btn-action-delete" onclick="hapusData('${row.id}')">🗑️ Hapus</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                tabel.style.display = 'table';
+                loading.style.display = 'none';
+            } else {
+                loading.innerText = "📭 Belum ada data di database.";
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Gagal memuat data: " + err.message);
+            loading.innerText = "❌ Terjadi kesalahan saat memuat data.";
+        }
+    }
+
+    // --- 3. FUNGSI LIHAT DETAIL (BERSIH DARI TOMBOL INDEX) ---
+    async function lihatDetail(id) {
+        const { data, error } = await _supabase
+            .from('db_irigasi')
+            .select('data_tabel_html, nama_di')
+            .eq('id', id)
+            .single();
+
+        if (data) {
+            const win = window.open("", "_blank");
+            win.document.write(`
+                <html>
+                <head>
+                    <title>Laporan - ${data.nama_di}</title>
+                    <style>
+                        body { font-family: 'Segoe UI', sans-serif; padding: 30px; line-height: 1.6; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px; }
+                        th, td { border: 1px solid black; padding: 5px; text-align: center; }
+                        .text-left { text-align: left; }
+                        
+                        /* SEMBUNYIKAN SEMUA TOMBOL DARI INDEX */
+                        button, 
+                        .btn-save, 
+                        .btn-refresh, 
+                        .btn-add,
+                        [onclick*="tambahBaris"],
+                        .no-print { 
+                            display: none !important; 
+                        }
+
+                        [contenteditable="true"] { outline: none; }
+
+                        @media print {
+                            .no-print-area { display: none; }
+                            body { padding: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div style="text-align:center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h2 style="margin:0;">LAPORAN DATA IRIGASI DIGITAL</h2>
+                        <p style="margin:5px 0;">Nama Petugas/DI: <strong>${data.nama_di}</strong></p>
+                    </div>
+
+                    ${data.data_tabel_html}
+
+                    <div style="margin-top: 50px; text-align: center;" class="no-print-area">
+                        <button onclick="window.print()" style="display:inline-block !important; padding: 10px 20px; background: #27ae60; color: white; border: none; cursor: pointer; border-radius: 5px;">🖨️ Cetak ke PDF / Printer</button>
+                        <button onclick="window.close()" style="display:inline-block !important; padding: 10px 20px; background: #95a5a6; color: white; border: none; cursor: pointer; border-radius: 5px; margin-left: 10px;">❌ Tutup</button>
+                    </div>
+                </body>
+                </html>
+            `);
+            win.document.close();
+        }
+    }
+
+    // --- 4. FUNGSI HAPUS ---
+    async function hapusData(id) {
+        if(confirm("Apakah Anda yakin ingin menghapus data laporan ini selamanya?")) {
+            const { error } = await _supabase
+                .from('db_irigasi')
+                .delete()
+                .eq('id', id);
+            
+            if (error) {
+                alert("Gagal hapus: " + error.message);
+            } else {
+                muatData();
+            }
+        }
+    }
+
+    // Jalankan saat pertama kali buka
+    window.onload = muatData;
+</script>
+
+</body>
+</html>

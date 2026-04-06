@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Neraca Pembagian Air - Edit Mode</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 11px; margin: 20px; color: #000; background-color: #f0f0f0; }
+        .container { width: 100%; max-width: 1200px; margin: 0 auto; border: 1px solid #ccc; padding: 20px; background-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header-box { float: right; border: 2px solid #000; padding: 5px 15px; font-weight: bold; font-size: 14px; }
+        .title { text-align: center; clear: both; margin-top: 40px; margin-bottom: 25px; }
+        .title h2 { margin: 0; font-size: 15px; text-transform: uppercase; }
+        .info-table { width: 100%; margin-bottom: 20px; }
+        .info-table td { padding: 2px 0; vertical-align: top; }
+        .label { width: 180px; }
+        .sep { width: 15px; text-align: center; }
+        .data-section-title { font-weight: bold; margin-bottom: 5px; font-size: 13px; margin-top: 20px; }
+        .main-table { width: 100%; border-collapse: collapse; text-align: center; margin-bottom: 10px; }
+        .main-table th, .main-table td { border: 1px solid black; padding: 4px; }
+        .main-table thead th { background-color: #f2f2f2; font-weight: normal; }
+        .col-num { background-color: #f9f9f9; font-size: 10px; }
+        .text-left { text-align: left; padding-left: 5px; }
+
+        /* Style khusus untuk bagian yang bisa diedit */
+        [contenteditable="true"] { 
+            border: 1px dashed transparent; 
+            transition: 0.2s; 
+        }
+        [contenteditable="true"]:hover { 
+            background-color: #fffde7; 
+            border: 1px dashed #3498db; 
+            cursor: pointer;
+        }
+        [contenteditable="true"]:focus { 
+            background-color: #fff9c4; 
+            outline: 2px solid #3498db; 
+            border: 1px solid transparent;
+        }
+
+        .admin-tools { position: fixed; top: 10px; right: 10px; background: white; border: 2px solid #000; padding: 10px; z-index: 999; display: flex; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-save { background: #27ae60; color: white; border: none; padding: 8px 15px; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        .btn-admin { background: #2980b9; color: white; padding: 8px 15px; text-decoration: none; font-weight: bold; font-size: 11px; border-radius: 4px; }
+
+        @media print { .admin-tools { display: none; } body { background: none; } .container { border: none; box-shadow: none; } }
+    </style>
+</head>
+<body>
+
+<div class="admin-tools">
+    <button class="btn-save" onclick="saveToSupabase()">💾 SIMPAN KE SUPABASE</button>
+    <a href="admin.html" class="btn-admin">📊 REKAP ADMIN</a>
+</div>
+
+<div class="container" id="reportArea">
+    <div class="header-box">Blangko 10 - O</div>
+
+    <div class="title">
+        <h2>LAPORAN PRODUKTIVITAS DAN NERACA PEMBAGIAN AIR PER DAERAH IRIGASI</h2>
+        <h2 contenteditable="true">Tahun 2025 s/d 2026</h2>
+    </div>
+
+    <table class="info-table">
+        <tr>
+            <td width="50%">
+                <table>
+                    <tr><td class="label">Daerah Irigasi</td><td class="sep">:</td><td contenteditable="true">CIMULU</td></tr>
+                    <tr><td class="label">No. Kode DI</td><td class="sep">:</td><td contenteditable="true">320.468.00000</td></tr>
+                    <tr><td class="label">Total Luas Sawah Irigasi DI</td><td class="sep">:</td><td contenteditable="true">1.546,20 Ha</td></tr>
+                    <tr><td class="label">Jumlah Petak Tersier</td><td class="sep">:</td><td contenteditable="true">47 Bh</td></tr>
+                </table>
+            </td>
+            <td width="50%">
+                <table>
+                    <tr><td class="label">Kabupaten/Kota</td><td class="sep">:</td><td contenteditable="true">TASIKMALAYA</td></tr>
+                    <tr><td class="label">Luas Areal Kerja Ranting/Pengamat</td><td class="sep">:</td><td contenteditable="true">1.546,20 Ha</td></tr>
+                    <tr><td class="label">Jumlah Mantri/Juru</td><td class="sep">:</td><td contenteditable="true">1 (Satu) Buah</td></tr>
+                    <tr><td class="label">Bagian Pelaksana Kegiatan</td><td class="sep">:</td><td contenteditable="true">SUP Citanduy Hulu</td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <div style="margin-bottom: 10px;">1. Realisasi Tanam (dari Blangko 05-O)
+    <button type="button" onclick="tambahBarisTabel1()" style="background: #2ecc71; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold;">
+        ➕ Tambah Baris Bulan (I & II)
+    </button>
+</div>
+    <table class="main-table" id="tabelRealisasi">
+        <thead>
+            <tr>
+                <th rowspan="3" width="80">Bulan</th>
+                <th rowspan="3" width="30"></th>
+                <th colspan="4">Padi (ha)</th>
+                <th colspan="3">Palawija (ha)</th>
+                <th rowspan="3" width="50">Tebu (ha)</th>
+                <th rowspan="3" width="50">Lain-lain (ha)</th>
+                <th rowspan="3" width="60">Jumlah Tanaman (ha)</th>
+                <th rowspan="3" width="50">Bero (ha)</th>
+            </tr>
+            <tr>
+                <th>MT.1</th>
+                <th colspan="2">MT.2</th>
+                <th>MT.3</th>
+                <th rowspan="2">MT.1</th>
+                <th rowspan="2">MT.2</th>
+                <th rowspan="2">MT.3</th>
+            </tr>
+            <tr>
+                <th>Padi Rendeng</th>
+                <th>Gadu Izin</th>
+                <th>Gadu Tidak Izin</th>
+                <th>Gadu Tidak Izin</th>
+            </tr>
+            <tr class="col-num">
+                <th>1</th><th></th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td rowspan="2" class="text-left" contenteditable="true">Nopember</td>
+                <td>I</td>
+                <td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">1472,53</td>
+                <td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">7,75</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">1480,28</td><td contenteditable="true">65,92</td>
+            </tr>
+            <tr>
+                <td>II</td>
+                <td contenteditable="true">1050,37</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">469,9</td>
+                <td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">8,7</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">1528,97</td><td contenteditable="true">17,2</td>
+            </tr>
+            <tr>
+                <td rowspan="2" class="text-left" contenteditable="true">Desember</td>
+                <td>I</td>
+                <td contenteditable="true">894,17</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">405,3</td>
+                <td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">1299,47</td><td contenteditable="true">246,7</td>
+            </tr>
+            <tr>
+                <td>II</td>
+                <td contenteditable="true">1522,20</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">1522,20</td><td contenteditable="true">17,2</td>
+            </tr>
+            <tr>
+                <td rowspan="2" class="text-left" contenteditable="true">Januari</td>
+                <td>I</td>
+                <td contenteditable="true">1529,00</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">1529,00</td><td contenteditable="true">17,2</td>
+            </tr>
+            <tr>
+                <td>II</td>
+                <td contenteditable="true">1531,80</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">1531,80</td><td contenteditable="true">14,4</td>
+            </tr>
+              <tr>
+                <td rowspan="2" class="text-left" contenteditable="true">Februari</td>
+                <td>I</td>
+                <td contenteditable="true">1520,30</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">1520,30</td><td contenteditable="true">-</td>
+            </tr>
+            <tr>
+                <td>II</td>
+                <td contenteditable="true">1520,30</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td><td contenteditable="true">-</td>
+                <td contenteditable="true">-</td><td contenteditable="true">1520,30</td><td contenteditable="true">-</td>
+            </tr>
+             <tr>
+                <td rowspan="2" class="text-left" contenteditable="true">Maret</td>
+                <td>I</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>II</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+             <tr>
+                <td rowspan="2" class="text-left" contenteditable="true">April</td>
+                <td>I</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>II</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+             <tr>
+                <td rowspan="2" class="text-left" contenteditable="true">Mei</td>
+                <td>I</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>II</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+             <tr>
+                <td rowspan="2" class="text-left" contenteditable="true">Juni</td>
+                <td>I</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>II</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+             <tr>
+                <td rowspan="2" class="text-left" contenteditable="true">Juli</td>
+                <td>I</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>II</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+             <tr>
+                <td rowspan="2" class="text-left" contenteditable="true">Agustus</td>
+                <td>I</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>II</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+             <tr>
+                <td rowspan="2" class="text-left" contenteditable="true">September</td>
+                <td>I</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>II</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+             <tr>
+                <td rowspan="2" class="text-left" contenteditable="true">Oktober</td>
+                <td>I</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>II</td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+           
+           <tr style="font-weight: bold; background-color: #f9f9f9;">
+                <td colspan="2" class="text-left">Puncak Luas tanam (ha)</td>
+                <td contenteditable="true">1.520,30</td><td contenteditable="true">1.520,30</td><td contenteditable="true"></td><td contenteditable="true">1.314,27</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+            <tr style="font-weight: bold;">
+                <td colspan="2" class="text-left">Intensitas tanam masing-masing MT**)</td>
+                <td contenteditable="true">100,00</td><td contenteditable="true">100,00</td><td contenteditable="true"></td><td contenteditable="true">86,45</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+            </tr>
+            <tr style="font-weight: bold; background-color: #eee;">
+                <td colspan="2" class="text-left">Intensitas tanaman total</td>
+                <td colspan="10" style="text-align: center;">% = Jumlah intensitas tanam MT.1 + MT.2 + MT.3</td>
+                <td contenteditable="true">286,45</td>
+            </tr>
+        </tbody>
+    </table>
+
+   <div style="display: flex; gap: 20px;">
+    <div style="flex: 1;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <div style="font-weight:bold;">2. Kerusakan Tanam dari Blangko 05-0</div>
+            <button type="button" onclick="tambahBarisSimple('tabelKerusakan')" style="background: #2ecc71; color: white; border: none; padding: 2px 8px; cursor: pointer; border-radius: 3px; font-size: 10px;">+ Baris</button>
+        </div>
+        <table class="main-table" id="tabelKerusakan">
+            <tbody>
+                <tr><td class="text-left" contenteditable="true">Genangan/Banjir</td><td contenteditable="true" width="100">-</td></tr>
+                <tr><td class="text-left" contenteditable="true">Kekeringan</td><td contenteditable="true">-</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="flex: 1;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <div style="font-weight:bold;">3. Rencana Tanam</div>
+            <button type="button" onclick="tambahBarisSimple('tabelRencana')" style="background: #2ecc71; color: white; border: none; padding: 2px 8px; cursor: pointer; border-radius: 3px; font-size: 10px;">+ Baris</button>
+        </div>
+        <table class="main-table" id="tabelRencana">
+            <tbody>
+                <tr><td class="text-left" contenteditable="true">Rencana Tahun Ini</td><td contenteditable="true" width="100">1.520,30</td></tr>
+                <tr><td class="text-left" contenteditable="true">Rencana Y.A.D</td><td contenteditable="true">1.520,30</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+    <div class="data-section-title" style="font-weight: bold;">4. Keadaan Air</div>
+    <button type="button" onclick="tambahBarisKeadaanAir()" style="background: #2ecc71; color: white; border: none; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 12px;">
+        ➕ Tambah Baris Air
+    </button>
+</div>
+<table class="main-table" id="tabelKeadaanAir">
+    <thead>
+        <tr>
+            <th rowspan="2">Total Debit tersedia<br>(m3/det)</th>
+            <th rowspan="2">Debit Pengamb.<br>(m3/det)</th>
+            <th rowspan="2">Q limpas bendung<br>(m3/det)</th>
+            <th rowspan="2">Kehil. air di jaringan utama (m3/det)</th>
+            <th rowspan="2">Q Suplesi<br>(m3/det)</th>
+            <th colspan="2">Kebutuhan Air (m3/det)</th>
+            <th rowspan="2">Faktor K rata-rata</th>
+            <th rowspan="2">Debit rencana<br>(ltr/det)</th>
+            <th rowspan="2">Curah hujan<br>(mm)</th>
+            <th rowspan="2">Neraca Air<br>(ltr/det)</th>
+            <th rowspan="2">Q pengambilan dibagi debit rencana</th>
+        </tr>
+        <tr>
+            <th>Tersier</th>
+            <th>Lain-lain</th>
+        </tr>
+        <tr class="col-num">
+            <th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>23</th><th>24</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td contenteditable="true">2204,67</td><td contenteditable="true">579,67</td><td contenteditable="true">1625,00</td><td contenteditable="true">0</td><td contenteditable="true">100,00</td><td contenteditable="true">1626,58</td><td contenteditable="true"></td><td contenteditable="true">0,06</td><td contenteditable="true">1256,58</td><td contenteditable="true">648</td><td contenteditable="true">-946,91</td><td contenteditable="true">0,46</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">1825,80</td><td contenteditable="true">660,80</td><td contenteditable="true">1165,00</td><td contenteditable="true">86,95</td><td contenteditable="true">85,00</td><td contenteditable="true">1819,74</td><td contenteditable="true"></td><td contenteditable="true">0,32</td><td contenteditable="true">1821,69</td><td contenteditable="true">230</td><td contenteditable="true">-1160,89</td><td contenteditable="true">0,36</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">4062,73</td><td contenteditable="true">2100,73</td><td contenteditable="true">1962,00</td><td contenteditable="true">99,12</td><td contenteditable="true">98,00</td><td contenteditable="true">1841,19</td><td contenteditable="true"></td><td contenteditable="true">0,36</td><td contenteditable="true">1842,31</td><td contenteditable="true">197</td><td contenteditable="true">258,42</td><td contenteditable="true">1,14</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">1328,93</td><td contenteditable="true">812,93</td><td contenteditable="true">516,00</td><td contenteditable="true">55,52</td><td contenteditable="true">95,00</td><td contenteditable="true">1680,04</td><td contenteditable="true"></td><td contenteditable="true">0,24</td><td contenteditable="true">1640,56</td><td contenteditable="true">97</td><td contenteditable="true">-827,63</td><td contenteditable="true">0,50</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">1662,00</td><td contenteditable="true">940,00</td><td contenteditable="true">722,00</td><td contenteditable="true">121,94</td><td contenteditable="true">110,00</td><td contenteditable="true">1713,40</td><td contenteditable="true"></td><td contenteditable="true">0,47</td><td contenteditable="true">1725,34</td><td contenteditable="true">150</td><td contenteditable="true">-785,34</td><td contenteditable="true">0,54</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">1197,47</td><td contenteditable="true">855,47</td><td contenteditable="true">342,00</td><td contenteditable="true">140,95</td><td contenteditable="true">110,00</td><td contenteditable="true">1404,68</td><td contenteditable="true"></td><td contenteditable="true">0,65</td><td contenteditable="true">1435,63</td><td contenteditable="true">140</td><td contenteditable="true">-580,16</td><td contenteditable="true">0,60</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">731,81</td><td contenteditable="true">639,81</td><td contenteditable="true">92,00</td><td contenteditable="true">95,97</td><td contenteditable="true">120,00</td><td contenteditable="true">1562,69</td><td contenteditable="true"></td><td contenteditable="true">0,42</td><td contenteditable="true">1538,66</td><td contenteditable="true">266</td><td contenteditable="true">-898,85</td><td contenteditable="true">0,42</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">2205,00</td><td contenteditable="true">1128,00</td><td contenteditable="true">1077,00</td><td contenteditable="true">169,20</td><td contenteditable="true">115,00</td><td contenteditable="true">1246,01</td><td contenteditable="true"></td><td contenteditable="true">0,86</td><td contenteditable="true">1300,21</td><td contenteditable="true">127</td><td contenteditable="true">-172,21</td><td contenteditable="true">0,87</td>
+        </tr>
+        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+    </tbody>
+</table>
+
+<div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+    <div class="data-section-title" style="font-weight: bold;">5. Produksi Tanaman</div>
+    <button type="button" onclick="tambahBarisProduksi()" style="background: #2ecc71; color: white; border: none; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 12px;">
+        ➕ Tambah Baris Prihal
+    </button>
+</div>
+
+<table class="main-table" id="tabelProduksi">
+    <thead>
+        <tr>
+            <th width="300">Prihal</th>
+            <th>Padi Rendeng</th>
+            <th>Gadu Izin</th>
+            <th>Gadu tak Izin</th>
+            <th>Palawija</th>
+            <th>Tebu/ lain-lain</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="text-left">a) Puncak luas tanam (ha)</td>
+            <td contenteditable="true">1.520,30</td>
+            <td contenteditable="true">1.520,30</td>
+            <td contenteditable="true">1.314,27</td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+        </tr>
+        <tr>
+            <td class="text-left">b) Data ubinan dari Distan rata2 (t/ha)</td>
+            <td contenteditable="true">4,2</td>
+            <td contenteditable="true">4,2</td>
+            <td contenteditable="true">4,2</td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+        </tr>
+        <tr>
+            <td class="text-left">c) = (a) x (b)</td>
+            <td contenteditable="true">6.385,26</td>
+            <td contenteditable="true">6.385,26</td>
+            <td contenteditable="true">5.519,93</td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+        </tr>
+        <tr>
+            <td class="text-left">produksi padi (ton)</td>
+            <td colspan="3" contenteditable="true" style="text-align: right; padding-right: 20px;">
+                <strong>18.290,45</strong>
+            </td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+        </tr>
+        <tr>
+            <td class="text-left">Jumlah produksi (ton)</td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+        </tr>
+    </tbody>
+</table>
+
+
+    <div style="margin-top: 50px; display: flex; justify-content: space-between; text-align: center;">
+        <div style="width: 30%; text-align: left; padding-top: 20px;">
+            <p>1520,3</p>
+        </div>
+
+        <div style="width: 35%;">
+            <p>Mengetahui,</p>
+            <p style="margin-bottom: 80px;">Kepala UPTD PSDA WS Citanduy</p>
+            <p><strong>Sonie Aprianto, ST., MT</strong></p>
+            <p>NIP. 197404242008011005</p>
+        </div>
+
+        <div style="width: 35%;">
+            <p>Tasikmalaya, Maret 2026</p>
+            <p>Jafung Ahli Muda SDA</p>
+            <p style="margin-bottom: 80px;">UPTD PSDA WS Citanduy</p>
+            <p><strong>Cecep Sopyan, ST, MT</strong></p>
+            <p>NIP. 197909262009011001</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 40px; font-style: italic; font-size: 10px;">
+        <p style="margin: 2px 0;">Laporan Tahunan : Ranting/Pengamat/UPTD ----> Kasi OP Kabupaten/Kota</p>
+        <p style="margin: 2px 0;">Ranting/Pengamat/UPTD ----> Kasi OP UPT Prov.</p>
+        <p style="margin: 2px 0;">Ranting/Pengamat/UPTD ----> Kasi OP Balai WS</p>
+    </div>
+</div>
+
+<script>
+    // --- KONFIGURASI SUPABASE ---
+    const SUPABASE_URL = 'https://wcypnoofitfvqoexjhkg.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjeXBub29maXRmdnFvZXhqaGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTQ1ODEsImV4cCI6MjA5MTAzMDU4MX0.PC1mMJM39ECO9gstUB5R0UsHOZuZzeea4TvbDLg2lBU';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // --- FUNGSI SIMPAN UTAMA ---
+    async function saveToSupabase() {
+        const btn = document.querySelector('.btn-save');
+        const originalText = btn.innerText;
+        
+        // 1. Tanya nama petugas agar tidak CIMULU terus
+        const inputPetugas = prompt("Masukkan Nama Petugas / Nama Daerah Irigasi:", "CIMULU");
+        
+        // Jika user klik cancel atau mengosongkan nama, batalkan proses simpan
+        if (inputPetugas === null || inputPetugas.trim() === "") {
+            alert("Simpan dibatalkan. Nama petugas wajib diisi.");
+            return;
+        }
+
+        btn.innerText = "⏳ SEDANG MENYIMPAN...";
+        btn.disabled = true;
+
+        const container = document.getElementById('reportArea');
+        if (!container) {
+            alert("Error: Elemen 'reportArea' tidak ditemukan!");
+            btn.innerText = originalText;
+            btn.disabled = false;
+            return;
+        }
+        
+        try {
+            // PERBAIKAN: Menggunakan variabel inputPetugas untuk kolom nama_di
+            const { data, error } = await _supabase
+                .from('db_irigasi')
+                .insert([{ 
+                    data_tabel_html: container.innerHTML, 
+                    nama_di: inputPetugas.toUpperCase(), // Menyimpan nama dalam huruf besar
+                    tgl_update: new Date().toISOString() 
+                }]);
+
+            if (error) throw error;
+            alert("✅ BERHASIL! Laporan atas nama " + inputPetugas + " telah disimpan.");
+            
+        } catch (error) {
+            console.error("Detail Error:", error);
+            alert("Error: " + error.message);
+        } finally {
+            btn.innerText = "💾 SIMPAN KE SUPABASE";
+            btn.disabled = false;
+        }
+    }
+
+    // --- TABEL 1: REALISASI TANAM ---
+    function tambahBarisTabel1() {
+        var table = document.getElementById("tabelRealisasi").getElementsByTagName('tbody')[0];
+        var targetIndex = table.rows.length - 3; 
+        if (targetIndex < 0) targetIndex = table.rows.length;
+
+        var row1 = table.insertRow(targetIndex);
+        var cellBulan = row1.insertCell(0);
+        cellBulan.rowSpan = 2;
+        cellBulan.contentEditable = "true";
+        cellBulan.innerText = "Bulan Baru";
+        cellBulan.style.textAlign = "left";
+
+        var cellI = row1.insertCell(1);
+        cellI.innerText = "I";
+
+        for (var i = 0; i < 11; i++) {
+            var cell = row1.insertCell(i + 2);
+            cell.contentEditable = "true";
+            cell.innerText = "-";
+        }
+
+        var row2 = table.insertRow(targetIndex + 1);
+        var cellII = row2.insertCell(0);
+        cellII.innerText = "II";
+
+        for (var j = 0; j < 11; j++) {
+            var cell = row2.insertCell(j + 1);
+            cell.contentEditable = "true";
+            cell.innerText = "-";
+        }
+    }
+
+    // --- TABEL 2 & 3: KERUSAKAN & RENCANA ---
+    function tambahBarisSimple(idTabel) {
+        var table = document.getElementById(idTabel).getElementsByTagName('tbody')[0];
+        var newRow = table.insertRow();
+        
+        var cell1 = newRow.insertCell(0);
+        cell1.className = "text-left";
+        cell1.contentEditable = "true";
+        cell1.innerText = "Isi Perihal...";
+
+        var cell2 = newRow.insertCell(1);
+        cell2.contentEditable = "true";
+        cell2.innerText = "-";
+    }
+
+    // --- TABEL 4: KEADAAN AIR ---
+    function tambahBarisKeadaanAir() {
+        var table = document.getElementById("tabelKeadaanAir").getElementsByTagName('tbody')[0];
+        var newRow = table.insertRow();
+        
+        for (var i = 0; i < 12; i++) {
+            var newCell = newRow.insertCell(i);
+            newCell.contentEditable = "true";
+            newCell.innerText = "-"; 
+        }
+    }
+
+    // --- TABEL 5: PRODUKSI TANAMAN ---
+    function tambahBarisProduksi() {
+        var table = document.getElementById("tabelProduksi");
+        if (!table) return;
+        var tbody = table.getElementsByTagName('tbody')[0];
+        
+        var targetIndex = tbody.rows.length - 1;
+        var newRow = tbody.insertRow(targetIndex);
+
+        for (var i = 0; i < 6; i++) {
+            var newCell = newRow.insertCell(i);
+            newCell.contentEditable = "true";
+            
+            if (i === 0) {
+                newCell.className = "text-left";
+                newCell.innerText = "c) ...";
+            } else {
+                newCell.innerText = "-";
+            }
+        }
+    }
+
+    // --- FUNGSI SIMPAN KHUSUS KEADAAN AIR ---
+    async function simpanKeadaanAir() {
+        const rows = document.querySelectorAll('#tabelKeadaanAir tbody tr');
+        let success = true;
+        
+        for (let row of rows) {
+            const cells = row.cells;
+            if (cells.length < 12) continue;
+
+            const { error } = await _supabase
+                .from('keadaan_air')
+                .insert([{
+                    total_debit: parseFloat(cells[0].innerText.replace(',','.')) || 0,
+                    debit_pengambil: parseFloat(cells[1].innerText.replace(',','.')) || 0,
+                    q_limpas: parseFloat(cells[2].innerText.replace(',','.')) || 0,
+                }]);
+                
+            if (error) {
+                console.error('Gagal simpan baris:', error);
+                success = false;
+            }
+        }
+        if(success) alert('Data Keadaan Air berhasil dikirim!');
+    }
+</script>
+</body>
+</html>
