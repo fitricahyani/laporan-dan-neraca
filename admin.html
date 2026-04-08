@@ -94,16 +94,24 @@
             color: #64748b; 
             padding: 18px; 
             text-align: center; 
+            text-transform: uppercase; 
+            font-size: 11px; 
+            letter-spacing: 1px;
             border-bottom: 2px solid #edf2f7;
         }
 
         tbody td { 
             padding: 16px; 
             text-align: center; 
+            font-size: 14px; 
             border-bottom: 1px solid #f1f5f9;
+            color: #475569;
         }
 
-        /* PERBAIKAN TOMBOL OPSI */
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #fafbfc; }
+        tr:hover { background-color: #f1f7ff; }
+
         .btn-action-view { 
             background: #f3e8ff; 
             color: #7e22ce; 
@@ -112,21 +120,24 @@
             border-radius: 6px; 
             cursor: pointer; 
             font-weight: 600; 
+            transition: 0.2s; 
         }
+        .btn-action-view:hover { background: #7e22ce; color: white; }
 
+        /* Tombol hapus tetap teks merah sesuai desain awal kamu agar tidak merubah layout */
         .btn-action-delete { 
-            background: #fee2e2; 
-            color: #dc2626; 
+            color: var(--danger); 
             border: none; 
-            padding: 8px 16px; 
-            border-radius: 6px; 
+            background: none; 
             cursor: pointer; 
-            font-weight: 600; 
-            margin-left: 8px;
+            font-weight: 500; 
+            margin-left: 10px; 
+            text-decoration: none;
+            font-size: 13px;
         }
-        .btn-action-delete:hover { background: #dc2626; color: white; }
+        .btn-action-delete:hover { text-decoration: underline; }
 
-        .loading { text-align: center; padding: 60px; color: #94a3b8; }
+        .loading { text-align: center; padding: 60px; color: #94a3b8; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -153,8 +164,9 @@
             <thead>
                 <tr>
                     <th width="20%">Tanggal Update</th>
-                    <th width="40%">Nama Daerah Irigasi</th>
-                    <th width="40%">Opsi Kelola</th>
+                    <th width="35%">Nama Daerah Irigasi</th>
+                    <th width="15%">Status</th>
+                    <th width="30%">Opsi Kelola</th>
                 </tr>
             </thead>
             <tbody id="isiTabel"></tbody>
@@ -167,7 +179,6 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjeXBub29maXRmdnFvZXhqaGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTQ1ODEsImV4cCI6MjA5MTAzMDU4MX0.PC1mMJM39ECO9gstUB5R0UsHOZuZzeea4TvbDLg2lBU';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Jalankan muat data saat pertama kali buka halaman
     window.onload = muatData;
 
     async function muatData() {
@@ -196,9 +207,10 @@
                     tr.innerHTML = `
                         <td style="font-size: 13px;">${tgl} <br> <small style="color:#94a3b8">${jam} WIB</small></td>
                         <td style="text-align:left; padding-left: 30px;"><strong>${row.nama_di || 'TIDAK ADA NAMA'}</strong></td>
+                        <td><span style="background:#dcfce7; color:#166534; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">Selesai</span></td>
                         <td>
                             <button class="btn-action-view" onclick="lihatDetail('${row.id}')">👁️ Detail</button>
-                            <button class="btn-action-delete" onclick="hapusData('${row.id}')">🗑️ Hapus</button>
+                            <button class="btn-action-delete" onclick="hapusData('${row.id}')">Hapus</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -206,17 +218,16 @@
                 tabel.style.display = 'table';
                 loading.style.display = 'none';
             } else {
-                loading.innerText = "📭 Belum ada data tersimpan.";
+                loading.innerText = "📭 Belum ada data.";
             }
         } catch (err) {
             alert("Gagal ambil data: " + err.message);
-            loading.innerText = "❌ Terjadi kesalahan koneksi.";
         }
     }
 
-    // --- FUNGSI HAPUS DATA (DITAMBAHKAN) ---
+    // --- INI FUNGSI HAPUS YANG TADI KETINGGALAN ---
     async function hapusData(id) {
-        if (confirm("Apakah Anda yakin ingin menghapus laporan ini secara permanen dari database?")) {
+        if (confirm("Apakah Anda yakin ingin menghapus laporan ini secara permanen?")) {
             try {
                 const { error } = await _supabase
                     .from('db_irigasi')
@@ -226,13 +237,14 @@
                 if (error) throw error;
 
                 alert("Data berhasil dihapus!");
-                muatData(); // Refresh tabel setelah hapus
+                muatData(); 
             } catch (err) {
-                alert("Gagal menghapus data: " + err.message);
+                alert("Gagal menghapus: " + err.message);
             }
         }
     }
 
+    // --- INI KODE DETAIL ASLI KAMU (SUDAH DIKEMBALIKAN) ---
     async function lihatDetail(id) {
         const { data, error } = await _supabase
             .from('db_irigasi')
@@ -247,17 +259,30 @@
                 <head>
                     <title>Laporan - ${data.nama_di}</title>
                     <style>
-                        body { font-family: Arial; padding: 20px; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                        th, td { border: 1px solid black !important; padding: 6px; text-align: center; font-size: 11px; }
-                        .no-print { display: none !important; }
+                        body { font-family: 'Arial', sans-serif; padding: 20px; background: #fff; color: #000; line-height: 1.4; }
+                        .container { width: 210mm; margin: 0 auto; }
+                        .header-laporan { text-align: center; margin-bottom: 30px; }
+                        .header-laporan h2 { margin: 5px 0; text-transform: uppercase; font-size: 16px; }
+                        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                        .main-table, table[id^="tabel"] { margin-top: 10px; }
+                        .main-table th, .main-table td, table[id^="tabel"] th, table[id^="tabel"] td { border: 1px solid black !important; padding: 6px; text-align: center; }
+                        button, .no-print-area { margin-top: 50px; text-align: center; }
+                        @media print { .no-print-area { display: none !important; } @page { size: portrait; margin: 1cm; } }
                     </style>
                 </head>
                 <body>
-                    <div>${data.data_tabel_html}</div>
-                    <div style="margin-top: 30px; text-align: center;" class="no-print">
-                        <button onclick="window.print()" style="padding: 10px 20px; background: #27ae60; color: white; border: none; cursor: pointer; border-radius: 5px;">PRINT</button>
+                    <div class="container">
+                        <div id="render-area">${data.data_tabel_html}</div>
+                        <div class="no-print-area">
+                            <button onclick="window.print()" style="padding: 12px 25px; background: #27ae60; color: white; border: none; cursor: pointer; border-radius: 6px; font-weight:bold;">🖨️ CETAK LAPORAN</button>
+                            <button onclick="window.close()" style="padding: 12px 25px; background: #95a5a6; color: white; border: none; cursor: pointer; border-radius: 6px; font-weight:bold; margin-left:10px;">TUTUP</button>
+                        </div>
                     </div>
+                    <script>
+                        const judul = document.querySelector('#render-area h2, #render-area strong');
+                        if(judul) { judul.parentElement.style.textAlign = 'center'; }
+                        document.querySelectorAll('[contenteditable="true"]').forEach(el => { el.setAttribute('contenteditable', 'false'); });
+                    <\/script>
                 </body>
                 </html>
             `);
