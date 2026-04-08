@@ -138,12 +138,12 @@
             border: none; 
             background: none; 
             cursor: pointer; 
-            font-weight: 500; 
-            margin-left: 10px; 
+            font-weight: 600; 
+            margin-left: 15px; 
             text-decoration: none;
             font-size: 13px;
         }
-        .btn-action-delete:hover { text-decoration: underline; }
+        .btn-action-delete:hover { text-decoration: underline; color: #c0392b; }
 
         .loading { text-align: center; padding: 60px; color: #94a3b8; font-size: 16px; }
     </style>
@@ -165,7 +165,7 @@
         </div>
     </div>
 
-    <div id="loadingStatus" class="loading">Memulai koneksi database aman...</div>
+    <div id="loadingStatus" class="loading">Memulai koneksi database...</div>
 
     <div class="table-wrapper">
         <table id="tabelRekap" style="display:none;">
@@ -183,18 +183,19 @@
 </div>
 
 <script>
+    // KONFIGURASI SUPABASE
     const SUPABASE_URL = 'https://wcypnoofitfvqoexjhkg.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjeXBub29maXRmdnFvZXhqaGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTQ1ODEsImV4cCI6MjA5MTAzMDU4MX0.PC1mMJM39ECO9gstUB5R0UsHOZuZzeea4TvbDLg2lBU';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 1. FUNGSI AMBIL DATA
+    // 1. FUNGSI MUAT DATA
     async function muatData() {
         const loading = document.getElementById('loadingStatus');
         const tabel = document.getElementById('tabelRekap');
         const tbody = document.getElementById('isiTabel');
 
         loading.style.display = 'block';
-        loading.innerHTML = '⏳ <span style="margin-left:10px">Mengambil data dari server...</span>';
+        loading.innerHTML = '⏳ Sedang mengambil data...';
         tabel.style.display = 'none';
         tbody.innerHTML = '';
 
@@ -213,8 +214,8 @@
                     
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td style="font-size: 13px;">${tgl} <br> <small style="color:#94a3b8">${jam} WIB</small></td>
-                        <td style="text-align:left; padding-left: 30px;"><strong>${row.nama_di || 'TIDAK ADA NAMA'}</strong></td>
+                        <td>${tgl} <br> <small style="color:#94a3b8">${jam} WIB</small></td>
+                        <td style="text-align:left; padding-left: 30px;"><strong>${row.nama_di || 'TANPA NAMA'}</strong></td>
                         <td><span class="status-badge">Selesai</span></td>
                         <td>
                             <button class="btn-action-view" onclick="lihatDetail('${row.id}')">👁️ Detail</button>
@@ -226,15 +227,45 @@
                 tabel.style.display = 'table';
                 loading.style.display = 'none';
             } else {
-                loading.innerText = "📭 Belum ada data tersimpan.";
+                loading.innerText = "📭 Tidak ada data.";
             }
         } catch (err) {
-            alert("Gagal ambil data: " + err.message);
-            loading.innerText = "❌ Terjadi kesalahan koneksi.";
+            console.error(err);
+            loading.innerText = "❌ Gagal koneksi ke database.";
         }
     }
 
-    // 2. FUNGSI LIHAT DETAIL / CETAK
+    // 2. FUNGSI HAPUS DATA (DIPERBAIKI)
+    async function hapusData(id) {
+        console.log("Mencoba menghapus ID:", id); // Cek di console log
+
+        if (!id || id === 'undefined') {
+            alert("ID Data tidak valid, tidak bisa dihapus.");
+            return;
+        }
+
+        const konfirmasi = confirm("Hapus laporan ini secara permanen?");
+        if (konfirmasi) {
+            try {
+                const { error } = await _supabase
+                    .from('db_irigasi')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) {
+                    console.error("Error Supabase:", error);
+                    throw error;
+                }
+
+                alert("Data Berhasil Dihapus!");
+                muatData(); // Refresh list
+            } catch (err) {
+                alert("Gagal menghapus data: " + err.message);
+            }
+        }
+    }
+
+    // 3. FUNGSI LIHAT DETAIL
     async function lihatDetail(id) {
         const { data, error } = await _supabase
             .from('db_irigasi')
@@ -249,64 +280,22 @@
                 <head>
                     <title>Laporan - ${data.nama_di}</title>
                     <style>
-                        body { font-family: 'Arial', sans-serif; padding: 30px; background: #fff; color: #000; }
-                        .container { width: 297mm; margin: 0 auto; }
-                        
-                        /* PAKSA BORDER TABEL MUNCUL */
-                        #render-area table { width: 100%; border-collapse: collapse !important; border: 1px solid black !important; margin-top: 20px; }
-                        #render-area th, #render-area td { border: 1px solid black !important; padding: 5px !important; text-align: center; font-size: 11px; }
-
-                        /* Judul ke Tengah */
-                        .header-judul-pusat { text-align: center; width: 100%; margin-bottom: 20px; }
-                        
+                        body { font-family: Arial; padding: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid black !important; padding: 5px; text-align: center; font-size: 12px; }
                         .no-print { display: none !important; }
-                        @media print { body { padding: 0; } .no-print-area { display: none !important; } @page { size: landscape; margin: 1cm; } }
+                        @media print { .no-print-area { display: none !important; } }
                     </style>
                 </head>
                 <body>
-                    <div class="container">
-                        <div id="render-area">${data.data_tabel_html}</div>
-                        <div class="no-print-area" style="margin-top: 30px; text-align: center;">
-                            <hr>
-                            <button onclick="window.print()" style="padding: 12px 25px; background: #27ae60; color: white; border: none; cursor: pointer; border-radius: 6px; font-weight:bold;">🖨️ CETAK</button>
-                            <button onclick="window.close()" style="padding: 12px 25px; background: #7f8c8d; color: white; border: none; cursor: pointer; border-radius: 6px; margin-left:10px;">TUTUP</button>
-                        </div>
+                    <div id="render">${data.data_tabel_html}</div>
+                    <div class="no-print-area" style="text-align:center; margin-top:30px;">
+                        <button onclick="window.print()" style="padding:10px 20px; background:green; color:white; border:none; cursor:pointer;">CETAK</button>
                     </div>
-                    <script>
-                        // Buat judul ke tengah otomatis
-                        const renderArea = document.getElementById('render-area');
-                        const judul = renderArea.querySelector('h2, h3, strong, p');
-                        if (judul) {
-                            judul.style.textAlign = 'center';
-                            judul.style.display = 'block';
-                            judul.style.width = '100%';
-                        }
-                        // Kunci input
-                        document.querySelectorAll('[contenteditable="true"]').forEach(el => el.setAttribute('contenteditable', 'false'));
-                    <\/script>
                 </body>
                 </html>
             `);
             win.document.close();
-        }
-    }
-
-    // 3. FUNGSI HAPUS DATA (SUDAH AKTIF)
-    async function hapusData(id) {
-        if (confirm("Apakah Anda yakin ingin menghapus laporan ini secara permanen?")) {
-            try {
-                const { error } = await _supabase
-                    .from('db_irigasi')
-                    .delete()
-                    .eq('id', id);
-
-                if (error) throw error;
-
-                alert("Data berhasil dihapus!");
-                muatData(); // Muat ulang tabel
-            } catch (err) {
-                alert("Gagal menghapus: " + err.message);
-            }
         }
     }
 
