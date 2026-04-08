@@ -236,7 +236,7 @@
         }
     }
 
-    async function lihatDetail(id) {
+  async function lihatDetail(id) {
         const { data, error } = await _supabase
             .from('db_irigasi')
             .select('data_tabel_html, nama_di')
@@ -252,69 +252,48 @@
                     <style>
                         body { 
                             font-family: 'Arial', sans-serif; 
-                            padding: 20px; 
+                            padding: 30px; 
                             background: #fff; 
                             color: #000;
-                            line-height: 1.4;
                         }
-                        .container { 
-                            width: 210mm; 
-                            margin: 0 auto; 
-                        }
+                        .container { width: 297mm; margin: 0 auto; } /* Lebar A4 Landscape agar tabel muat */
                         
-                        /* --- BAGIAN HEADER JUDUL (TENGAH) --- */
-                        .header-laporan {
-                            text-align: center;
-                            margin-bottom: 30px;
-                        }
-                        .header-laporan h2 {
-                            margin: 5px 0;
-                            text-transform: uppercase;
-                            font-size: 16px;
-                        }
-                        .blangko-code {
-                            text-align: left;
-                            font-size: 12px;
-                            margin-bottom: 10px;
-                        }
-
-                        /* --- TABEL DATA (INFO & UTAMA) --- */
-                        table { 
+                        /* --- MEMAKSA GARIS TABEL MUNCUL --- */
+                        #render-area table { 
                             width: 100%; 
-                            border-collapse: collapse; 
+                            border-collapse: collapse !important; 
+                            margin-top: 20px;
+                            border: 1px solid black !important;
+                        }
+
+                        #render-area th, 
+                        #render-area td { 
+                            border: 1px solid black !important; /* Paksa garis hitam tebal */
+                            padding: 5px !important; 
+                            text-align: center;
                             font-size: 11px;
+                            min-height: 20px;
                         }
 
-                        /* Gaya khusus untuk tabel informasi (Daerah Irigasi, dsb) agar tetap rapi */
-                        .info-table {
+                        /* Judul ke Tengah */
+                        .header-judul {
+                            text-align: center;
+                            width: 100%;
                             margin-bottom: 20px;
+                        }
+
+                        /* Menghilangkan garis pada tabel informasi (opsional, jika ingin bersih) */
+                        /* Jika Anda ingin tabel info di atas JUGA bergaris, hapus blok .info-table di bawah ini */
+                        .info-table, .info-table td {
                             border: none !important;
                         }
-                        .info-table td {
-                            border: none !important;
-                            padding: 2px 4px;
-                        }
 
-                        /* Gaya untuk tabel data utama */
-                        .main-table, table[id^="tabel"] { 
-                            margin-top: 10px;
-                        }
-                        .main-table th, .main-table td, 
-                        table[id^="tabel"] th, table[id^="tabel"] td { 
-                            border: 1px solid black !important; 
-                            padding: 6px; 
-                            text-align: center; 
-                        }
-
-                        .text-left { text-align: left !important; }
-
-                        /* Sembunyikan elemen input/tombol saat cetak */
-                        button, .no-print, .admin-tools { display: none !important; }
+                        .no-print { display: none !important; }
 
                         @media print {
                             body { padding: 0; }
                             .no-print-area { display: none !important; }
-                            @page { size: portrait; margin: 1cm; }
+                            @page { size: landscape; margin: 1cm; }
                         }
                     </style>
                 </head>
@@ -324,20 +303,37 @@
                             ${data.data_tabel_html}
                         </div>
 
-                        <div class="no-print-area" style="margin-top: 50px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
-                            <button onclick="window.print()" style="display:inline-block !important; padding: 12px 25px; background: #27ae60; color: white; border: none; cursor: pointer; border-radius: 6px; font-weight:bold;">🖨️ CETAK LAPORAN</button>
-                            <button onclick="window.close()" style="display:inline-block !important; padding: 12px 25px; background: #95a5a6; color: white; border: none; cursor: pointer; border-radius: 6px; font-weight:bold; margin-left:10px;">TUTUP</button>
+                        <div class="no-print-area" style="margin-top: 30px; text-align: center;">
+                            <hr>
+                            <button onclick="window.print()" style="padding: 10px 20px; background: #27ae60; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight:bold;">🖨️ CETAK</button>
+                            <button onclick="window.close()" style="padding: 10px 20px; background: #7f8c8d; color: white; border: none; cursor: pointer; border-radius: 4px; margin-left:10px;">TUTUP</button>
                         </div>
                     </div>
 
                     <script>
-                        // Memastikan Judul di dalam render-area menjadi center secara otomatis via JS jika struktur HTML-nya statis
-                        const judul = document.querySelector('#render-area h2, #render-area strong');
-                        if(judul) {
-                            judul.parentElement.style.textAlign = 'center';
-                        }
+                        // SCRIPT UNTUK MERAPIKAN TAMPILAN SECARA OTOMATIS
+                        const renderArea = document.getElementById('render-area');
                         
-                        // Kunci semua input
+                        // 1. Cari judul utama dan buat ke tengah
+                        const judul = renderArea.querySelector('h2, h3, strong, p:first-child');
+                        if (judul) {
+                            const wrapper = document.createElement('div');
+                            wrapper.className = 'header-judul';
+                            judul.parentNode.insertBefore(wrapper, judul);
+                            wrapper.appendChild(judul);
+                        }
+
+                        // 2. Pastikan semua cell yang kosong tetap punya border (isi spasi jika kosong)
+                        const cells = renderArea.querySelectorAll('td');
+                        cells.forEach(cell => {
+                            if (cell.innerHTML.trim() === "") {
+                                cell.innerHTML = "&nbsp;";
+                            }
+                            // Hapus atribut style bawaan yang mungkin menghilangkan border
+                            cell.style.border = "1px solid black";
+                        });
+
+                        // 3. Matikan mode edit
                         document.querySelectorAll('[contenteditable="true"]').forEach(el => {
                             el.setAttribute('contenteditable', 'false');
                         });
