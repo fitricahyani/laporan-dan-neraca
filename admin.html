@@ -250,29 +250,97 @@
                 <head>
                     <title>Laporan - ${data.nama_di}</title>
                     <style>
-                        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; background: #fff; font-size: 11px; color: #000; }
-                        .container { width: 210mm; margin: 0 auto; background: white; }
-                        .info-table, .info-table table { width: 100%; border-collapse: collapse; border: none !important; margin-bottom: 20px; }
-                        .info-table td { border: none !important; padding: 2px 0; vertical-align: top; text-align: left !important; }
-                        .main-table, table[id^="tabel"] { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        body { 
+                            font-family: 'Arial', sans-serif; 
+                            padding: 20px; 
+                            background: #fff; 
+                            color: #000;
+                            line-height: 1.4;
+                        }
+                        .container { 
+                            width: 210mm; 
+                            margin: 0 auto; 
+                        }
+                        
+                        /* --- BAGIAN HEADER JUDUL (TENGAH) --- */
+                        .header-laporan {
+                            text-align: center;
+                            margin-bottom: 30px;
+                        }
+                        .header-laporan h2 {
+                            margin: 5px 0;
+                            text-transform: uppercase;
+                            font-size: 16px;
+                        }
+                        .blangko-code {
+                            text-align: left;
+                            font-size: 12px;
+                            margin-bottom: 10px;
+                        }
+
+                        /* --- TABEL DATA (INFO & UTAMA) --- */
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            font-size: 11px;
+                        }
+
+                        /* Gaya khusus untuk tabel informasi (Daerah Irigasi, dsb) agar tetap rapi */
+                        .info-table {
+                            margin-bottom: 20px;
+                            border: none !important;
+                        }
+                        .info-table td {
+                            border: none !important;
+                            padding: 2px 4px;
+                        }
+
+                        /* Gaya untuk tabel data utama */
+                        .main-table, table[id^="tabel"] { 
+                            margin-top: 10px;
+                        }
                         .main-table th, .main-table td, 
                         table[id^="tabel"] th, table[id^="tabel"] td { 
-                            border: 1px solid black !important; padding: 5px; text-align: center; 
+                            border: 1px solid black !important; 
+                            padding: 6px; 
+                            text-align: center; 
                         }
-                        button, .no-print { display: none !important; }
-                        @media print { body { padding: 0; } .no-print-area { display: none !important; } }
+
+                        .text-left { text-align: left !important; }
+
+                        /* Sembunyikan elemen input/tombol saat cetak */
+                        button, .no-print, .admin-tools { display: none !important; }
+
+                        @media print {
+                            body { padding: 0; }
+                            .no-print-area { display: none !important; }
+                            @page { size: portrait; margin: 1cm; }
+                        }
                     </style>
                 </head>
                 <body>
                     <div class="container">
-                        <div id="render-area">${data.data_tabel_html}</div>
-                        <div style="margin-top: 50px; text-align: center;" class="no-print-area">
-                            <hr>
-                            <button onclick="window.print()" style="display:inline-block !important; padding: 12px 25px; background: #27ae60; color: white; border: none; cursor: pointer; border-radius: 6px; font-weight:bold; font-size:14px;">🖨️ CETAK LAPORAN</button>
+                        <div id="render-area">
+                            ${data.data_tabel_html}
+                        </div>
+
+                        <div class="no-print-area" style="margin-top: 50px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
+                            <button onclick="window.print()" style="display:inline-block !important; padding: 12px 25px; background: #27ae60; color: white; border: none; cursor: pointer; border-radius: 6px; font-weight:bold;">🖨️ CETAK LAPORAN</button>
+                            <button onclick="window.close()" style="display:inline-block !important; padding: 12px 25px; background: #95a5a6; color: white; border: none; cursor: pointer; border-radius: 6px; font-weight:bold; margin-left:10px;">TUTUP</button>
                         </div>
                     </div>
+
                     <script>
-                        document.querySelectorAll('[contenteditable="true"]').forEach(el => el.setAttribute('contenteditable', 'false'));
+                        // Memastikan Judul di dalam render-area menjadi center secara otomatis via JS jika struktur HTML-nya statis
+                        const judul = document.querySelector('#render-area h2, #render-area strong');
+                        if(judul) {
+                            judul.parentElement.style.textAlign = 'center';
+                        }
+                        
+                        // Kunci semua input
+                        document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                            el.setAttribute('contenteditable', 'false');
+                        });
                     <\/script>
                 </body>
                 </html>
@@ -280,15 +348,6 @@
             win.document.close();
         }
     }
-
-    async function hapusData(id) {
-        if(confirm("Apakah Anda yakin ingin menghapus laporan ini secara permanen?")) {
-            const { error } = await _supabase.from('db_irigasi').delete().eq('id', id);
-            if (!error) muatData();
-        }
-    }
-
-    window.onload = muatData;
 </script>
 </body>
 </html>
