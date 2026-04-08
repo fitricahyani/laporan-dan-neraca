@@ -15,11 +15,10 @@
         }
 
         body { 
-            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif; 
+            font-family: 'Inter', sans-serif; 
             margin: 0; 
             padding: 40px 20px;
             background-color: var(--bg-body); 
-            color: #333; 
         }
 
         .admin-container { 
@@ -31,121 +30,25 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.05); 
         }
 
-        .header-section {
-            text-align: center;
-            margin-bottom: 40px;
-        }
+        .header-section { text-align: center; margin-bottom: 40px; }
+        .header-section h1 { color: var(--secondary); margin: 0; font-size: 28px; font-weight: 800; }
+        .underline { width: 60px; height: 4px; background: var(--primary); margin: 10px auto; border-radius: 2px; }
 
-        .header-section h1 { 
-            color: var(--secondary); 
-            margin: 0 0 10px 0; 
-            font-size: 28px; 
-            font-weight: 800;
-            letter-spacing: -1px;
-        }
-
-        .header-section .underline {
-            width: 60px;
-            height: 4px;
-            background: var(--primary);
-            margin: 0 auto;
-            border-radius: 2px;
-        }
-
-        .action-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .btn-group { display: flex; gap: 12px; }
-
-        .btn {
-            padding: 10px 22px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-
+        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-size: 14px; }
         .btn-refresh { background: #ebf5ff; color: var(--primary); }
-        .btn-refresh:hover { background: var(--primary); color: white; }
-
         .btn-input { background: var(--success); color: white; }
-        .btn-input:hover { background: #219150; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(39,174,96,0.3); }
 
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 10px;
-            border: 1px solid #eee;
-        }
+        .table-wrapper { overflow-x: auto; border-radius: 10px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { background: #f8fafc; color: #64748b; padding: 15px; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #edf2f7; }
+        tbody td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; }
 
-        table { width: 100%; border-collapse: collapse; background: white; }
-        
-        thead th { 
-            background-color: #f8fafc; 
-            color: #64748b; 
-            padding: 18px; 
-            text-align: center; 
-            text-transform: uppercase; 
-            font-size: 11px; 
-            letter-spacing: 1px;
-            border-bottom: 2px solid #edf2f7;
-        }
+        .btn-action-view { background: #f3e8ff; color: #7e22ce; padding: 6px 12px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
+        .btn-action-delete { background: none; color: var(--danger); border: none; margin-left: 10px; cursor: pointer; font-weight: 600; }
+        .btn-action-delete:hover { text-decoration: underline; }
 
-        tbody td { 
-            padding: 16px; 
-            text-align: center; 
-            font-size: 14px; 
-            border-bottom: 1px solid #f1f5f9;
-            color: #475569;
-        }
-
-        tr:last-child td { border-bottom: none; }
-        tr:nth-child(even) { background-color: #fafbfc; }
-        tr:hover { background-color: #f1f7ff; }
-
-        .status-badge {
-            background: #dcfce7;
-            color: #166534;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .btn-action-view { 
-            background: #f3e8ff; 
-            color: #7e22ce; 
-            border: none; 
-            padding: 8px 16px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            transition: 0.2s; 
-        }
-        .btn-action-view:hover { background: #7e22ce; color: white; }
-
-        .btn-action-delete { 
-            color: var(--danger); 
-            border: none; 
-            background: none; 
-            cursor: pointer; 
-            font-weight: 600; 
-            margin-left: 15px; 
-            text-decoration: none;
-            font-size: 13px;
-        }
-        .btn-action-delete:hover { text-decoration: underline; color: #c0392b; }
-
-        .loading { text-align: center; padding: 60px; color: #94a3b8; font-size: 16px; }
+        .loading { text-align: center; padding: 40px; color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -154,27 +57,24 @@
     <div class="header-section">
         <h1>📊 DATA CENTER REKAPITULASI</h1>
         <div class="underline"></div>
-        <p style="color: #64748b; margin-top: 10px; font-size: 14px;">Manajemen Database Neraca Air Daerah Irigasi</p>
     </div>
 
     <div class="action-bar">
-        <div style="font-weight: bold; color: var(--secondary);">List Laporan Terbaru</div>
+        <div style="font-weight: bold;">Daftar Laporan</div>
         <div class="btn-group">
-            <button class="btn btn-refresh" onclick="muatData()">🔄 Refresh Data</button>
-            <a href="index.html" class="btn btn-input">➕ Buat Laporan</a>
+            <button class="btn btn-refresh" onclick="muatData()">🔄 Refresh</button>
+            <a href="index.html" class="btn btn-input">➕ Tambah</a>
         </div>
     </div>
 
-    <div id="loadingStatus" class="loading">Memulai koneksi database...</div>
-
+    <div id="loadingStatus" class="loading">Menghubungkan ke database...</div>
     <div class="table-wrapper">
         <table id="tabelRekap" style="display:none;">
             <thead>
                 <tr>
-                    <th width="20%">Tanggal Update</th>
-                    <th width="35%">Nama Daerah Irigasi</th>
-                    <th width="15%">Status</th>
-                    <th width="30%">Opsi Kelola</th>
+                    <th>Update</th>
+                    <th>Nama Daerah Irigasi</th>
+                    <th>Opsi</th>
                 </tr>
             </thead>
             <tbody id="isiTabel"></tbody>
@@ -183,96 +83,40 @@
 </div>
 
 <script>
-    // KONFIGURASI SUPABASE
     const SUPABASE_URL = 'https://wcypnoofitfvqoexjhkg.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjeXBub29maXRmdnFvZXhqaGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTQ1ODEsImV4cCI6MjA5MTAzMDU4MX0.PC1mMJM39ECO9gstUB5R0UsHOZuZzeea4TvbDLg2lBU';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 1. FUNGSI MUAT DATA
     async function muatData() {
         const loading = document.getElementById('loadingStatus');
         const tabel = document.getElementById('tabelRekap');
         const tbody = document.getElementById('isiTabel');
-
         loading.style.display = 'block';
-        loading.innerHTML = '⏳ Sedang mengambil data...';
         tabel.style.display = 'none';
         tbody.innerHTML = '';
 
         try {
-            const { data, error } = await _supabase
-                .from('db_irigasi') 
-                .select('*')
-                .order('tgl_update', { ascending: false });
-
+            const { data, error } = await _supabase.from('db_irigasi').select('*').order('tgl_update', { ascending: false });
             if (error) throw error;
-
-            if (data && data.length > 0) {
-                data.forEach(row => {
-                    const tgl = new Date(row.tgl_update).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
-                    const jam = new Date(row.tgl_update).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
-                    
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${tgl} <br> <small style="color:#94a3b8">${jam} WIB</small></td>
-                        <td style="text-align:left; padding-left: 30px;"><strong>${row.nama_di || 'TANPA NAMA'}</strong></td>
-                        <td><span class="status-badge">Selesai</span></td>
-                        <td>
-                            <button class="btn-action-view" onclick="lihatDetail('${row.id}')">👁️ Detail</button>
-                            <button class="btn-action-delete" onclick="hapusData('${row.id}')">Hapus</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-                tabel.style.display = 'table';
-                loading.style.display = 'none';
-            } else {
-                loading.innerText = "📭 Tidak ada data.";
-            }
-        } catch (err) {
-            console.error(err);
-            loading.innerText = "❌ Gagal koneksi ke database.";
-        }
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${new Date(row.tgl_update).toLocaleDateString('id-ID')}</td>
+                    <td style="text-align:left"><strong>${row.nama_di || 'No Name'}</strong></td>
+                    <td>
+                        <button class="btn-action-view" onclick="lihatDetail('${row.id}')">👁️ Detail</button>
+                        <button class="btn-action-delete" onclick="hapusData('${row.id}')">Hapus</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            tabel.style.display = 'table';
+            loading.style.display = 'none';
+        } catch (e) { alert(e.message); }
     }
 
-    // 2. FUNGSI HAPUS DATA (DIPERBAIKI)
-    async function hapusData(id) {
-        console.log("Mencoba menghapus ID:", id); // Cek di console log
-
-        if (!id || id === 'undefined') {
-            alert("ID Data tidak valid, tidak bisa dihapus.");
-            return;
-        }
-
-        const konfirmasi = confirm("Hapus laporan ini secara permanen?");
-        if (konfirmasi) {
-            try {
-                const { error } = await _supabase
-                    .from('db_irigasi')
-                    .delete()
-                    .eq('id', id);
-
-                if (error) {
-                    console.error("Error Supabase:", error);
-                    throw error;
-                }
-
-                alert("Data Berhasil Dihapus!");
-                muatData(); // Refresh list
-            } catch (err) {
-                alert("Gagal menghapus data: " + err.message);
-            }
-        }
-    }
-
-    // 3. FUNGSI LIHAT DETAIL
     async function lihatDetail(id) {
-        const { data, error } = await _supabase
-            .from('db_irigasi')
-            .select('data_tabel_html, nama_di')
-            .eq('id', id)
-            .single();
-
+        const { data } = await _supabase.from('db_irigasi').select('*').eq('id', id).single();
         if (data) {
             const win = window.open("", "_blank");
             win.document.write(`
@@ -280,22 +124,38 @@
                 <head>
                     <title>Laporan - ${data.nama_di}</title>
                     <style>
-                        body { font-family: Arial; padding: 20px; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        th, td { border: 1px solid black !important; padding: 5px; text-align: center; font-size: 12px; }
-                        .no-print { display: none !important; }
-                        @media print { .no-print-area { display: none !important; } }
+                        body { font-family: Arial; padding: 20px; background: #fff; }
+                        .container { width: 297mm; margin: 0 auto; }
+                        #render-area table { width: 100%; border-collapse: collapse !important; border: 1px solid black !important; margin-top: 20px; }
+                        #render-area th, #render-area td { border: 1px solid black !important; padding: 5px !important; text-align: center; font-size: 11px; }
+                        /* CSS untuk Header ke Tengah */
+                        #render-area h2, #render-area h3, #render-area p { text-align: center !important; width: 100%; margin: 5px 0; }
+                        .no-print-area { text-align: center; margin-top: 30px; }
+                        @media print { .no-print-area { display: none !important; } @page { size: landscape; margin: 1cm; } }
                     </style>
                 </head>
                 <body>
-                    <div id="render">${data.data_tabel_html}</div>
-                    <div class="no-print-area" style="text-align:center; margin-top:30px;">
-                        <button onclick="window.print()" style="padding:10px 20px; background:green; color:white; border:none; cursor:pointer;">CETAK</button>
+                    <div class="container">
+                        <div id="render-area">${data.data_tabel_html}</div>
+                        <div class="no-print-area">
+                            <button onclick="window.print()" style="padding: 10px 20px; background: #27ae60; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">PRINT LAPORAN</button>
+                        </div>
                     </div>
                 </body>
                 </html>
             `);
             win.document.close();
+        }
+    }
+
+    async function hapusData(id) {
+        if (confirm("Hapus data ini secara permanen?")) {
+            try {
+                const { error } = await _supabase.from('db_irigasi').delete().eq('id', id);
+                if (error) throw error;
+                alert("Berhasil dihapus!");
+                muatData();
+            } catch (e) { alert("Gagal hapus: " + e.message); }
         }
     }
 
